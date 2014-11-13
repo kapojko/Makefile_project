@@ -1,0 +1,22 @@
+MODE = C
+CFLAGS += -std=c11
+
+BUILD_EXE = TRUE
+BUILD_LIB = FALSE
+BUILD_DLL = FALSE
+BUILD_DOC = FALSE
+
+CONFIGURATIONS = debug
+
+INCLUDES += -I../../include
+LIBSD += -L../../lib -lafcd
+
+sources = print_intrg
+
+sources_dir = .
+
+resources = 
+
+windows_rc = 
+
+target = print_intrg
