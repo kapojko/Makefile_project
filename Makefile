@@ -52,21 +52,21 @@ endif
 
 # Make targets
 
-all : $(configurations)
+all : $(CONFIGURATIONS)
 
-clean : $(addprefix clean_,$(configurations))
+clean : $(addprefix clean_,$(CONFIGURATIONS))
 
-ifneq ($(filter release,$(configurations)),)
+ifneq ($(filter release,$(CONFIGURATIONS)),)
 release : $(objects)
-ifneq ($(filter exe,$(targets)),)
+ifneq ($(filter exe,$(TARGETS)),)
 	@mkdir -p bin
 	$(COMP) $(LDFLAGS) -o bin/$(target)$(exe_suffix) $(objects) $(ext_objects) $(LIBS)
 endif
-ifneq ($(filter lib,$(targets)),)
+ifneq ($(filter lib,$(TARGETS)),)
 	@mkdir -p lib
 	ar rcs lib/lib$(target).a $(objects) $(ext_objects)
 endif
-ifneq ($(filter dll,$(targets)),)
+ifneq ($(filter dll,$(TARGETS)),)
 ifeq ($(UNAME),windows32)
 	@mkdir -p dll
 	$(COMP) -shared \
@@ -77,17 +77,17 @@ endif
 endif
 endif
 
-ifneq ($(filter debug,$(configurations)),)
+ifneq ($(filter debug,$(CONFIGURATIONS)),)
 debug : $(objectsd)
-ifneq ($(filter exe,$(targets)),)
+ifneq ($(filter exe,$(TARGETS)),)
 	@mkdir -p bin
 	$(COMP) $(LDFLAGS) -o bin/$(target)d$(exe_suffix) $(objectsd) $(ext_objectsd) $(LIBSD)
 endif
-ifneq ($(filter lib,$(targets)),)
+ifneq ($(filter lib,$(TARGETS)),)
 	@mkdir -p lib
 	ar rcs lib/lib$(target)d.a $(objectsd) $(ext_objectsd)
 endif
-ifneq ($(filter dll,$(targets)),)
+ifneq ($(filter dll,$(TARGETS)),)
 ifeq ($(UNAME),windows32)
 	@mkdir -p dll
 	$(COMP) -shared \
@@ -140,7 +140,7 @@ objd/$(target).rc.o : $(windows_rc)
 	@mkdir -p $(dir $@)
 	windres $< $@
 
-ifneq ($(filter doc,$(targets)),)
+ifneq ($(filter doc,$(TARGETS)),)
 
 .PHONY : doc
 doc :
@@ -156,19 +156,19 @@ endif
 
 endif
 
-ifneq ($(filter release,$(configurations)),)
+ifneq ($(filter release,$(CONFIGURATIONS)),)
 clean_release :
 	rm -f $(objects)
 ifeq ($(MODE),FORTRAN)
 	rm -f mod/*
 endif
-ifneq ($(filter exe,$(targets)),)
+ifneq ($(filter exe,$(TARGETS)),)
 	rm -f bin/$(target)$(exe_suffix)
 endif
-ifneq ($(filter lib,$(targets)),)
+ifneq ($(filter lib,$(TARGETS)),)
 	rm -f lib/lib$(target).a
 endif
-ifneq ($(filter dll,$(targets)),)
+ifneq ($(filter dll,$(TARGETS)),)
 ifeq ($(UNAME),windows32)
 	rm -f dll/$(target).def
 	rm -f dll/lib$(target).a
@@ -177,19 +177,19 @@ endif
 endif
 endif
 
-ifneq ($(filter debug,$(configurations)),)
+ifneq ($(filter debug,$(CONFIGURATIONS)),)
 clean_debug :
 	rm -f $(objectsd)
 ifeq ($(MODE),FORTRAN)
 	rm -f mod/*
 endif
-ifneq ($(filter exe,$(targets)),)
+ifneq ($(filter exe,$(TARGETS)),)
 	rm -f bin/$(target)d$(exe_suffix)
 endif
-ifneq ($(filter lib,$(targets)),)
+ifneq ($(filter lib,$(TARGETS)),)
 	rm -f lib/lib$(target)d.a
 endif
-ifneq ($(filter dll,$(targets)),)
+ifneq ($(filter dll,$(TARGETS)),)
 ifeq ($(UNAME),windows32)
 	rm -f dll/$(target)d.def
 	rm -f dll/lib$(target)d.a
