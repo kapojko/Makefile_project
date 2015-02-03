@@ -1,24 +1,28 @@
-UNAME := $(strip $(shell uname -s))
-
 # Custom project data is placed in file "Makefile_project"
 # This file contain only common instructions
 
+# Common parameters and flags
+
+UNAME := $(strip $(shell uname -s))
+
+CC = gcc
+CXX = g++
+FC = gfortran
+LD = ld
+
+CFLAGS = -Wall
+CXXFLAGS = -Wall
+FFLAGS = -Wall -fimplicit-none -ffree-form -Jmod -Imod
+
+# Directories
+
+sources_dir = src
+
+# Custom project data
+
 include Makefile_project
 
-# Common flags
-
-ifndef $(CC)
-	CC = gcc
-endif
-ifndef $(CXX)
-	CXX = g++
-endif
-ifndef $(FC)
-	FC = gfortran
-endif
-ifndef $(LD)
-	LD = ld
-endif
+# Compilation
 
 ifeq ($(MODE),C)
 	COMP = $(CC)
@@ -28,18 +32,6 @@ ifeq ($(MODE),C++)
 endif
 ifeq ($(MODE),FORTRAN)
 	COMP = $(FC)
-endif
-
-CFLAGS += -Wall
-
-CXXFLAGS += -Wall
-
-FFLAGS += -Wall -fimplicit-none -ffree-form -Jmod -Imod
-
-# Compilation
-
-ifeq ($(sources_dir),)
-	sources_dir = src
 endif
 
 objects = $(addprefix obj/, $(addsuffix .o, $(basename $(sources)) $(resources)))
@@ -60,44 +52,50 @@ endif
 
 # Make targets
 
-default_configuration = $(word 1, $(CONFIGURATIONS))
+all : $(configurations)
 
-default : $(default_configuration)
+clean : $(addprefix clean_,$(configurations))
 
-clean : clean_$(default_configuration)
-
+ifneq ($(filter release,$(configurations)),)
 release : $(objects)
-ifeq ($(BUILD_EXE),TRUE)
+ifneq ($(filter exe,$(targets)),)
 	@mkdir -p bin
 	$(COMP) $(LDFLAGS) -o bin/$(target)$(exe_suffix) $(objects) $(ext_objects) $(LIBS)
 endif
-ifeq ($(BUILD_LIB),TRUE)
+ifneq ($(filter lib,$(targets)),)
 	@mkdir -p lib
 	ar rcs lib/lib$(target).a $(objects) $(ext_objects)
 endif
-ifeq ($(BUILD_DLL),TRUE)
+ifneq ($(filter dll,$(targets)),)
+ifeq ($(UNAME),windows32)
 	@mkdir -p dll
 	$(COMP) -shared \
 		-Wl,--output-def,dll/$(target).def \
 		-Wl,--out-implib,dll/lib$(target).a \
 		-o dll/$(target).dll $(objects) $(ext_objects) $(LIBS)
 endif
+endif
+endif
 
+ifneq ($(filter debug,$(configurations)),)
 debug : $(objectsd)
-ifeq ($(BUILD_EXE),TRUE)
+ifneq ($(filter exe,$(targets)),)
 	@mkdir -p bin
 	$(COMP) $(LDFLAGS) -o bin/$(target)d$(exe_suffix) $(objectsd) $(ext_objectsd) $(LIBSD)
 endif
-ifeq ($(BUILD_LIB),TRUE)
+ifneq ($(filter lib,$(targets)),)
 	@mkdir -p lib
 	ar rcs lib/lib$(target)d.a $(objectsd) $(ext_objectsd)
 endif
-ifeq ($(BUILD_DLL),TRUE)
+ifneq ($(filter dll,$(targets)),)
+ifeq ($(UNAME),windows32)
 	@mkdir -p dll
 	$(COMP) -shared \
 		-Wl,--output-def,dll/$(target)d.def \
 		-Wl,--out-implib,dll/lib$(target)d.a \
 		-o dll/$(target)d.dll $(objectsd) $(ext_objectsd) $(LIBSD)
+endif
+endif
 endif
 
 obj/%.o : $(sources_dir)/%.c
@@ -142,58 +140,62 @@ objd/$(target).rc.o : $(windows_rc)
 	@mkdir -p $(dir $@)
 	windres $< $@
 
+ifneq ($(filter doc,$(targets)),)
+
 .PHONY : doc
 doc :
-ifeq ($(BUILD_DOC),TRUE)
 	@mkdir -p doc/html
 	doxygen doc/Doxyfile
+
+DOC_FILES = $(strip $(shell ls -A doc/html))
+
+clean_doc :
+ifneq ($(DOC_FILES),)
+	rm -f doc/html/*
 endif
 
+endif
+
+ifneq ($(filter release,$(configurations)),)
 clean_release :
 	rm -f $(objects)
 ifeq ($(MODE),FORTRAN)
 	rm -f mod/*
 endif
-ifeq ($(BUILD_EXE),TRUE)
+ifneq ($(filter exe,$(targets)),)
 	rm -f bin/$(target)$(exe_suffix)
 endif
-ifeq ($(BUILD_LIB),TRUE)
+ifneq ($(filter lib,$(targets)),)
 	rm -f lib/lib$(target).a
 endif
-ifeq ($(BUILD_DLL),TRUE)
+ifneq ($(filter dll,$(targets)),)
+ifeq ($(UNAME),windows32)
 	rm -f dll/$(target).def
 	rm -f dll/lib$(target).a
 	rm -f dll/$(target).dll
 endif
+endif
+endif
 
+ifneq ($(filter debug,$(configurations)),)
 clean_debug :
 	rm -f $(objectsd)
 ifeq ($(MODE),FORTRAN)
 	rm -f mod/*
 endif
-ifeq ($(BUILD_EXE),TRUE)
+ifneq ($(filter exe,$(targets)),)
 	rm -f bin/$(target)d$(exe_suffix)
 endif
-ifeq ($(BUILD_LIB),TRUE)
+ifneq ($(filter lib,$(targets)),)
 	rm -f lib/lib$(target)d.a
 endif
-ifeq ($(BUILD_DLL),TRUE)
+ifneq ($(filter dll,$(targets)),)
+ifeq ($(UNAME),windows32)
 	rm -f dll/$(target)d.def
 	rm -f dll/lib$(target)d.a
 	rm -f dll/$(target)d.dll
 endif
-
-DOC_FILES = $(strip $(shell ls -A doc/html))
-
-clean_doc :
-ifeq ($(BUILD_DOC),TRUE)
-ifneq ($(DOC_FILES),)
-	rm -f doc/html/*
 endif
 endif
 
-all : $(CONFIGURATIONS)
-
-cleanall : $(addprefix clean_, $(CONFIGURATIONS))
-
-rebuild : cleanall all
+rebuild : clean all
