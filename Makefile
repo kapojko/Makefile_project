@@ -3,7 +3,15 @@
 
 # Common parameters and flags
 
-UNAME := $(strip $(shell uname -s))
+ifneq (,$(findstring /cygdrive/,$(PATH)))
+    UNAME := cygwin
+else
+ifneq (,$(findstring system32,$(PATH)))
+    UNAME := windows32
+else
+    UNAME := $(strip $(shell uname -s))
+endif
+endif
 
 CC = gcc
 CXX = g++
